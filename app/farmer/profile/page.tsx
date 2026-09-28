@@ -22,6 +22,8 @@ import {
   Building2,
   CheckCircle2,
   LogOut,
+  Download,
+  Smartphone,
 } from "lucide-react";
 
 export default function FarmerProfilePage() {
@@ -37,6 +39,22 @@ export default function FarmerProfilePage() {
   const [cattleCount, setCattleCount] = useState<number>(8);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isStandaloneMode =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+      setIsAppInstalled(Boolean(isStandaloneMode));
+    }
+  }, []);
+
+  const triggerPwaInstall = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("dairyflow_trigger_install"));
+    }
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -349,6 +367,35 @@ export default function FarmerProfilePage() {
           <span className="self-start sm:self-auto text-[11px] sm:text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             Active Verified Session
           </span>
+        </div>
+
+        {/* PWA App Installation for Mobile Devices */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl sm:rounded-2xl bg-[#0B5D3B]/5 border border-[#0B5D3B]/15">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0B5D3B]">
+              <Smartphone className="w-4 h-4 text-[#3A8F3D]" />
+              <span>DairyFlow Mobile App (PWA)</span>
+            </div>
+            <p className="text-xs text-[#6B756E] leading-relaxed">
+              Install DairyFlow directly on your mobile home screen for fast 1-tap milk tracking and offline access.
+            </p>
+          </div>
+
+          {isAppInstalled ? (
+            <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>Installed on Device</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={triggerPwaInstall}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0B5D3B] hover:bg-[#07452C] active:scale-95 text-white transition-all text-xs sm:text-sm font-bold min-h-[48px] touch-manipulation shadow-xs shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>Install on Home Screen</span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl sm:rounded-2xl bg-[#FAFCF8] border border-[#DDE8DF]">

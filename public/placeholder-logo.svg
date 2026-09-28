@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" width="100%" height="100%">
+  <defs>
+    <linearGradient id="df-grad-drop" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B5D3B" />
+      <stop offset="55%" stop-color="#3A8F3D" />
+      <stop offset="100%" stop-color="#7CB342" />
+    </linearGradient>
+    <linearGradient id="df-grad-leaf" x1="70" y1="40" x2="160" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7CB342" />
+      <stop offset="100%" stop-color="#3A8F3D" />
+    </linearGradient>
+    <linearGradient id="df-grad-milk" x1="100" y1="80" x2="100" y2="165" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F4F8F4" />
+    </linearGradient>
+    <filter id="df-shadow" x="0" y="0" width="200" height="200" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#07452C" flood-opacity="0.16" />
+    </filter>
+  </defs>
+
+  <!-- Background Shield/Badge with subtle depth -->
+  <rect x="16" y="16" width="168" height="168" rx="44" fill="#0B5D3B" filter="url(#df-shadow)" />
+  <rect x="18" y="18" width="164" height="164" rx="42" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+
+  <!-- Sun / Warmth Accent (Dairy Golden Sun) -->
+  <circle cx="140" cy="62" r="14" fill="#F4C95D" opacity="0.95" />
+
+  <!-- Organic Sprout / Green Leaf behind Milk Drop -->
+  <path d="M125 58 C155 78 145 118 105 128 C95 102 108 72 125 58 Z" fill="url(#df-grad-leaf)" opacity="0.85" />
+
+  <!-- Pure White Milk Droplet -->
+  <path d="M100 48 C100 48 62 94 62 122 C62 143 79 160 100 160 C121 160 138 143 138 122 C138 94 100 48 100 48 Z" fill="url(#df-grad-milk)" />
+
+  <!-- Flow Wave Lines inside Droplet (DairyFlow dynamic pulse) -->
+  <path d="M72 124 C82 116 94 116 104 124 C114 132 122 130 128 126" stroke="#3A8F3D" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.85" />
+  <path d="M78 136 C86 130 94 130 102 136 C110 142 118 140 122 137" stroke="#0B5D3B" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.75" />
+
+  <!-- Droplet Gloss Highlight -->
+  <path d="M78 88 C74 98 73 108 74 118 C72 114 71 106 74 96 C77 86 84 76 89 71 C84 76 80 81 78 88 Z" fill="#FFFFFF" opacity="0.6" />
+</svg>

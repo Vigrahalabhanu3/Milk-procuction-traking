@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #0B5D3B;
+  --primary-dark: #07452C;
+  --primary-light: #E8F5E9;
+
+  --secondary: #3A8F3D;
+  --accent: #7CB342;
+
+  --dairy-yellow: #F4C95D;
+
+  --background: #FAFCF8;
+  --surface: #FFFFFF;
+
+  --text: #17231D;
+  --text-muted: #6B756E;
+
+  --border: #DDE8DF;
+
+  --success: #3A8F3D;
+  --error: #D9534F;
+  --warning: #F59E0B;
+  --info: #0284C7;
+
+  --gradient-brand: linear-gradient(135deg, #0B5D3B, #3A8F3D, #7CB342);
+}
+
+@theme {
+  --color-primary: #0B5D3B;
+  --color-primary-dark: #07452C;
+  --color-primary-light: #E8F5E9;
+  --color-secondary: #3A8F3D;
+  --color-accent: #7CB342;
+  --color-dairy-yellow: #F4C95D;
+  --color-background: #FAFCF8;
+  --color-surface: #FFFFFF;
+  --color-text-main: #17231D;
+  --color-text-muted: #6B756E;
+  --color-border-subtle: #DDE8DF;
+  --color-success: #3A8F3D;
+  --color-error: #D9534F;
+  --color-warning: #F59E0B;
+  --color-info: #0284C7;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Glass and elevation helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #0B5D3B, #3A8F3D, #7CB342);
+}
+
+.brand-gradient-subtle {
+  background: linear-gradient(135deg, rgba(11, 93, 59, 0.05), rgba(58, 143, 61, 0.08), rgba(124, 179, 66, 0.05));
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #0B5D3B, #3A8F3D);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAFCF8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C4D7C8;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3A8F3D;
+}
+
+/* Print specific styles for reports */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .no-print, header, aside, nav, button:not(.print-include) {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-card {
+    border: 1px solid #CCCCCC !important;
+    box-shadow: none !important;
+  }
+}

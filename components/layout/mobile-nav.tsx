@@ -36,8 +36,6 @@ export function MobileNav({ isOpen, onClose, role }: MobileNavProps) {
             className="fixed inset-0 bg-black/60 backdrop-blur-xs"
             aria-hidden="true"
           />
-
-          {/* Drawer content */}
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { X, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -91,55 +90,5 @@ export function Modal({
         </div>
       )}
     </AnimatePresence>
-  );
-}
-
-export function ConfirmDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  message,
-  confirmText = "Delete",
-  cancelText = "Cancel",
-  isDestructive = true,
-  isLoading = false,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  isDestructive?: boolean;
-  isLoading?: boolean;
-}) {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="sm">
-      <div className="space-y-4">
-        {isDestructive && (
-          <div className="w-12 h-12 rounded-2xl bg-[#D9534F]/10 flex items-center justify-center text-[#D9534F] mx-auto mb-2">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        )}
-        <p className="text-sm text-[#6B756E] text-center">{message}</p>
-
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#DDE8DF]">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
-            {cancelText}
-          </Button>
-          <Button
-            variant={isDestructive ? "danger" : "primary"}
-            size="sm"
-            onClick={onConfirm}
-            isLoading={isLoading}
-            loadingText={isDestructive ? "Deleting..." : "Confirming..."}
-          >
-            {confirmText}
-          </Button>
-        </div>
-      </div>
-    </Modal>
   );
 }

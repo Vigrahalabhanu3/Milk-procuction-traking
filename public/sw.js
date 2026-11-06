@@ -1,4 +1,4 @@
-const CACHE_NAME = "dairyflow-cache-v1";
+const CACHE_NAME = "dairyflow-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/login",
@@ -26,7 +26,7 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+          keys.filter((key) => key.startsWith("dairyflow-cache-") && key !== CACHE_NAME).map((key) => caches.delete(key))
         )
       )
       .then(() => self.clients.claim())
@@ -37,9 +37,15 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Ignore non-GET requests and dev HMR
+  // Let the browser and Next.js manage application code and API requests.
+  const url = new URL(request.url);
+
+  // Ignore non-GET requests, framework chunks, and backend requests.
   if (
     request.method !== "GET" ||
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith("/_next/") ||
+    url.pathname.startsWith("/api/") ||
     request.url.includes("/_next/webpack-hmr") ||
     request.url.startsWith("chrome-extension://")
   ) {
@@ -67,12 +73,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets (images, icons, fonts) -> Cache-first with network background revalidate
+  // Cache images and fonts only. Never serve stale JavaScript or styles.
   if (
     request.destination === "image" ||
-    request.destination === "font" ||
-    request.destination === "style" ||
-    request.destination === "script"
+    request.destination === "font"
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {

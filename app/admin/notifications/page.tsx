@@ -1,245 +1,81 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  getNotifications,
-  createNotification,
-} from "@/lib/services/notification.service";
-import { getFarmers } from "@/lib/services/farmer.service";
-import { AppNotification, Farmer } from "@/lib/types";
+import { useRef, useState } from "react";
+import { Bell, Send, CheckCircle2, UserRound, Users } from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { ApiError, FieldErrors } from "@/lib/api/client";
+import { useFarmerOptions } from "@/lib/hooks/use-farmer-options";
+import { DispatchNotification } from "@/lib/services/notifications-api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/dialog";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/components/ui/toast";
-import { formatDate } from "@/lib/utils";
-import { Bell, Plus, Send, CheckCircle2, User, Users } from "lucide-react";
 
 export default function AdminNotificationsPage() {
-  const { success, error: toastError } = useToast();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [farmers, setFarmers] = useState<Farmer[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Form State
+  const { protectedRequest } = useAuth();
+  const { success } = useToast();
+  const options = useFarmerOptions();
+  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [targetType, setTargetType] = useState<"ALL" | "FARMER">("ALL");
-  const [targetFarmerId, setTargetFarmerId] = useState("");
-  const [notifType, setNotifType] = useState<"system" | "collection" | "payment" | "quality">("system");
+  const [audience, setAudience] = useState<"all" | "specific">("all");
+  const [farmerId, setFarmerId] = useState("");
+  const [category, setCategory] = useState<DispatchNotification["category"]>("general");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [fields, setFields] = useState<FieldErrors>({});
+  const [saved, setSaved] = useState<(DispatchNotification & { recipient: string }) | null>(null);
+  const busy = useRef(false);
+  const fieldClass = "min-h-12 w-full rounded-xl border border-[#DDE8DF] bg-white px-4 py-3 text-base text-[#17231D] focus:outline-none focus:border-[#3A8F3D] focus:ring-4 focus:ring-[#3A8F3D]/10 sm:text-sm";
 
-  const loadAll = async () => {
-    const [notifs, fs] = await Promise.all([
-      getNotifications({ role: "ADMIN" }),
-      getFarmers(),
-    ]);
-    setNotifications(notifs);
-    setFarmers(fs);
-    if (fs.length > 0 && !targetFarmerId) {
-      setTargetFarmerId(fs[0].farmerId);
-    }
-  };
-
-  useEffect(() => {
-    loadAll();
-  }, []);
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !message) {
-      toastError("Please enter notification title and message.");
-      return;
-    }
-
+  function fieldError(key: string) {
+    return fields[key]?.length ? <div id={`notification-error-${key}`} role="alert" className="mt-1 space-y-1 text-xs text-[#D9534F]">{fields[key].map((text, index) => <p key={index}>{text}</p>)}</div> : null;
+  }
+  async function send(event: React.FormEvent) {
+    event.preventDefault();
+    if (busy.current) return;
+    setError("");
+    const errors: FieldErrors = {};
+    if (!title.trim()) errors.title = ["Enter a notification title."];
+    if (!message.trim()) errors.message = ["Enter a notification message."];
+    if (audience === "specific" && (!farmerId || !options.farmers.some(farmer => farmer.id === Number(farmerId)))) errors.farmer = ["Select a farmer."];
+    setFields(errors);
+    if (Object.keys(errors).length) return;
+    const payload: DispatchNotification = { audience, title: title.trim(), message: message.trim(), category, ...(audience === "specific" ? { farmer: Number(farmerId) } : {}) };
+    busy.current = true; setSaving(true);
     try {
-      await createNotification({
-        title,
-        message,
-        targetRole: targetType === "ALL" ? "ALL" : "FARMER",
-        targetFarmerId: targetType === "FARMER" ? targetFarmerId : undefined,
-        type: notifType,
-      });
+      await protectedRequest("/api/admin/notifications/", payload, "POST", 201);
+      const recipient = audience === "all" ? "All farmers" : options.farmers.find(farmer => farmer.id === Number(farmerId))?.name ?? "Selected farmer";
+      setSaved({ ...payload, recipient });
+      setOpen(false); setTitle(""); setMessage(""); setAudience("all"); setFarmerId(""); setCategory("general"); setFields({});
+      success("Notification saved successfully.");
+      window.dispatchEvent(new Event("dairyflow_update_notifications"));
+    } catch (error) {
+      if (error instanceof ApiError) { setError(error.message); setFields(error.fields); }
+      else setError("Unable to save the notification. Please try again.");
+    } finally { busy.current = false; setSaving(false); }
+  }
 
-      setIsModalOpen(false);
-      setTitle("");
-      setMessage("");
-      await loadAll();
-      success("Notification dispatched to recipient(s).");
-    } catch {
-      toastError("Failed to dispatch notification.");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#17231D] tracking-tight">
-            Notification Dispatch Center
-          </h1>
-          <p className="text-xs sm:text-sm text-[#6B756E] mt-1">
-            Send real-time alerts, payment updates, and test certifications directly to farmers.
-          </p>
-        </div>
-
-        <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)} className="gap-2 shadow-xs">
-          <Send className="w-4 h-4" />
-          Send New Notification
-        </Button>
-      </div>
-
-      {/* Notifications Ledger */}
-      <Card className="p-0 overflow-hidden">
-        <div className="p-5 border-b border-[#DDE8DF] flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-base text-[#17231D]">Dispatched Notifications</h3>
-            <p className="text-xs text-[#6B756E]">Broadcast and targeted delivery history</p>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#FAFCF8] text-[#6B756E] uppercase font-bold tracking-wider border-b border-[#DDE8DF]">
-              <tr>
-                <th className="py-3.5 px-4">Title</th>
-                <th className="py-3.5 px-4">Message</th>
-                <th className="py-3.5 px-4">Target Audience</th>
-                <th className="py-3.5 px-4">Sent Timestamp</th>
-                <th className="py-3.5 px-4 text-center">Receipt Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#DDE8DF]">
-              {notifications.map((n) => (
-                <tr key={n.id} className="hover:bg-[#FAFCF8]">
-                  <td className="py-3.5 px-4 font-bold text-[#17231D]">{n.title}</td>
-                  <td className="py-3.5 px-4 text-[#6B756E] max-w-sm truncate">{n.message}</td>
-                  <td className="py-3.5 px-4 font-medium text-[#17231D]">
-                    {n.targetRole === "ALL" ? (
-                      <span className="inline-flex items-center gap-1 text-[#0B5D3B]">
-                        <Users className="w-3.5 h-3.5" /> All Farmers
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[#3A8F3D]">
-                        <User className="w-3.5 h-3.5" /> {n.targetFarmerId || "Farmer"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 text-[#6B756E]">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                      Delivered
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* Send Notification Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Send Farmer Notification"
-        description="Dispatch SMS & dashboard alert to individual farmer or all members"
-      >
-        <form onSubmit={handleSend} className="space-y-4 text-xs">
-          <div className="space-y-1">
-            <label className="font-bold uppercase tracking-wider text-[#17231D]">Target Audience</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setTargetType("ALL")}
-                className={`py-2 px-3 rounded-xl border text-center font-bold transition-all ${
-                  targetType === "ALL"
-                    ? "bg-[#0B5D3B] text-white border-[#0B5D3B]"
-                    : "bg-white text-[#6B756E] border-[#DDE8DF]"
-                }`}
-              >
-                All Registered Farmers
-              </button>
-              <button
-                type="button"
-                onClick={() => setTargetType("FARMER")}
-                className={`py-2 px-3 rounded-xl border text-center font-bold transition-all ${
-                  targetType === "FARMER"
-                    ? "bg-[#0B5D3B] text-white border-[#0B5D3B]"
-                    : "bg-white text-[#6B756E] border-[#DDE8DF]"
-                }`}
-              >
-                Specific Farmer
-              </button>
-            </div>
-          </div>
-
-          {targetType === "FARMER" && (
-            <div className="space-y-1">
-              <label className="font-bold uppercase tracking-wider text-[#17231D]">Select Target Farmer</label>
-              <select
-                value={targetFarmerId}
-                onChange={(e) => setTargetFarmerId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#DDE8DF] focus:outline-none focus:border-[#3A8F3D] bg-white font-semibold"
-              >
-                {farmers.map((f) => (
-                  <option key={f.id} value={f.farmerId}>
-                    {f.farmerId} — {f.name} ({f.village})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <label className="font-bold uppercase tracking-wider text-[#17231D]">Notification Title *</label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Milk Collection Recorded or Payment Disbursed"
-              className="w-full px-3 py-2 rounded-xl border border-[#DDE8DF] focus:outline-none focus:border-[#3A8F3D] bg-white font-bold"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="font-bold uppercase tracking-wider text-[#17231D]">Notification Message *</label>
-            <textarea
-              rows={3}
-              required
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write the notification details here..."
-              className="w-full px-3 py-2 rounded-xl border border-[#DDE8DF] focus:outline-none focus:border-[#3A8F3D] bg-white"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="font-bold uppercase tracking-wider text-[#17231D]">Category</label>
-            <select
-              value={notifType}
-              onChange={(e) => setNotifType(e.target.value as any)}
-              className="w-full px-3 py-2 rounded-xl border border-[#DDE8DF] focus:outline-none focus:border-[#3A8F3D] bg-white"
-            >
-              <option value="collection">Collection Alert</option>
-              <option value="payment">Payment Disbursement</option>
-              <option value="quality">Quality Certification</option>
-              <option value="system">General Announcement / System</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-[#DDE8DF]">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Dispatch Notification
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
-  );
+  return <div className="space-y-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-2xl font-black tracking-tight text-[#17231D] sm:text-3xl">Notification Dispatch Center</h1><p className="mt-1 text-sm text-[#6B756E]">Send dashboard notifications to all farmers or one selected farmer.</p></div><Button onClick={() => { setOpen(true); setError(""); setFields({}); }}><Send className="h-4 w-4" />Send New Notification</Button></div>
+    <Card className="overflow-hidden p-0">
+      <div className="border-b border-[#DDE8DF] p-5"><h2 className="font-bold text-[#17231D]">Last saved notification</h2><p className="mt-1 text-xs text-[#6B756E]">Confirmation of the latest notification saved during this session.</p></div>
+      {saved ? <div role="status" className="space-y-4 p-5 sm:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-[#0B5D3B]"><CheckCircle2 className="h-5 w-5" />Notification saved to the database</div><h3 className="break-words text-lg font-bold text-[#17231D]">{saved.title}</h3><p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#6B756E]">{saved.message}</p><div className="flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-[#EEF5E8] px-3 py-1 text-[#0B5D3B]">{saved.recipient}</span><span className="rounded-full bg-[#F3F5F1] px-3 py-1 text-[#53645A]">{saved.category === "milk_collection" ? "Milk collection" : "General"}</span></div></div> : <div className="flex min-h-64 flex-col items-center justify-center px-6 py-10 text-center"><Bell className="mb-4 h-10 w-10 text-[#8AA582]" /><h3 className="font-bold text-[#17231D]">Keep your farmers informed</h3><p className="mt-2 max-w-sm text-sm leading-relaxed text-[#6B756E]">Create a notification for farmers to view in their notifications page.</p></div>}
+    </Card>
+    <Modal isOpen={open} onClose={() => { if (!busy.current) setOpen(false); }} title="Send Farmer Notification" description="Choose the audience and write the notification details." maxWidth="lg">
+      <form onSubmit={send} noValidate aria-busy={saving} className="space-y-5">
+        {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-[#D9534F]">{error}</p>}{fieldError("non_field_errors")}
+        <fieldset disabled={saving} className="min-w-0 space-y-5">
+          <div className="space-y-2"><p className="text-sm font-semibold text-[#17231D]">Audience</p><div role="group" aria-label="Notification audience" className="grid grid-cols-2 gap-3">{[{ value: "all", label: "All farmers", icon: Users }, { value: "specific", label: "Specific farmer", icon: UserRound }].map(({ value, label, icon: Icon }) => <button type="button" key={value} aria-pressed={audience === value} onClick={() => setAudience(value as typeof audience)} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold ${audience === value ? "border-[#0B5D3B] bg-[#0B5D3B] text-white" : "border-[#DDE8DF] bg-white text-[#6B756E]"}`}><Icon className="h-4 w-4 shrink-0" />{label}</button>)}</div>{fieldError("audience")}</div>
+          {audience === "specific" && <div className="space-y-2"><label htmlFor="notification-farmer" className="text-sm font-semibold text-[#17231D]">Select farmer *</label>{options.isLoading && <LoadingSpinner label="Loading farmers..." showLabel />}<SelectDropdown id="notification-farmer" value={farmerId} onChange={setFarmerId} placeholder="Select a farmer" searchable invalid={!!fields.farmer?.length} describedBy="notification-error-farmer" disabled={saving || options.isLoading || !!options.error || !options.farmers.length} options={options.farmers.map(farmer => ({ value: String(farmer.id), label: `${farmer.name} (${farmer.farmer_id})`, description: farmer.village || undefined }))} />{fieldError("farmer")}{options.error && <p role="alert" className="text-xs text-[#D9534F]">{options.error} <button type="button" onClick={options.reload} className="underline">Retry</button></p>}{!options.isLoading && !options.error && !options.farmers.length && <p className="text-xs text-[#6B756E]">No farmers available.</p>}</div>}
+          <div className="space-y-2"><label htmlFor="notification-title" className="text-sm font-semibold text-[#17231D]">Title *</label><input id="notification-title" required value={title} onChange={event => setTitle(event.target.value)} placeholder="Enter a notification title" aria-invalid={!!fields.title?.length} aria-describedby="notification-error-title" className={fieldClass} />{fieldError("title")}</div>
+          <div className="space-y-2"><label htmlFor="notification-message" className="text-sm font-semibold text-[#17231D]">Message *</label><textarea id="notification-message" required rows={4} value={message} onChange={event => setMessage(event.target.value)} placeholder="Write the notification details..." aria-invalid={!!fields.message?.length} aria-describedby="notification-error-message" className={`${fieldClass} resize-y`} />{fieldError("message")}</div>
+          <div className="space-y-2"><label htmlFor="notification-category" className="text-sm font-semibold text-[#17231D]">Category</label><SelectDropdown id="notification-category" value={category} onChange={value => setCategory(value as typeof category)} disabled={saving} invalid={!!fields.category?.length} describedBy="notification-error-category" options={[{ value: "general", label: "General" }, { value: "milk_collection", label: "Milk collection" }]} />{fieldError("category")}</div>
+          <div className="flex justify-end gap-3 border-t border-[#DDE8DF] pt-4"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" isLoading={saving} loadingText="Saving notification..."><Send className="h-4 w-4" />Dispatch Notification</Button></div>
+        </fieldset>
+      </form>
+    </Modal>
+  </div>;
 }

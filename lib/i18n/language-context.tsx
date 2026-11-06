@@ -19,10 +19,9 @@ const STORAGE_KEY = "dairyflow_lang";
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = window.setTimeout(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Language | null;
       if (saved && (saved === "en" || saved === "te")) {
@@ -32,6 +31,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       // localStorage may fail in restricted privacy mode
     }
 
+    }, 0);
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && (e.newValue === "en" || e.newValue === "te")) {
         setLanguageState(e.newValue);
@@ -39,7 +40,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    return () => { window.clearTimeout(timer); window.removeEventListener("storage", handleStorageChange); };
   }, []);
 
   const setLanguage = (lang: Language) => {

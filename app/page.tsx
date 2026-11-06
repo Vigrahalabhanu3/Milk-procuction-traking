@@ -1,478 +1,57 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowRight, Bell, CalendarDays, ClipboardList, Milk, UserPlus, Users } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
-import { BrandMark } from "@/components/brand/brand-mark";
 import { LanguageSelector } from "@/components/ui/language-selector";
+import { buttonVariants } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import {
-  Milk,
-  Award,
-  Receipt,
-  LineChart,
-  Users,
-  FileSpreadsheet,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-} from "lucide-react";
-import { motion } from "framer-motion";
+
+const copy = {
+  en: {
+    login: "Login", features: "Features", how: "How it works", badge: "Dairy management, made simple",
+    title: "Every collection.", accent: "A clearer picture.", description: "Bring farmers, milk records, and collection earnings together in one easy-to-use place.",
+    cta: "Sign in to DairyFlow", secondary: "Explore the features", photo: "Connected to your dairy", photoText: "One platform for farmers and administrators.",
+    featureTitle: "Everything your dairy uses, in one place", featureText: "Simple tools for the work you do every day.",
+    collection: "Milk collections", collectionText: "Record morning and evening deliveries with quantity, rate, and available quality readings.",
+    earnings: "Monthly earnings", earningsText: "See collection value, litres supplied, and daily or farmer-wise monthly breakdowns.",
+    notifications: "Farmer notifications", notificationsText: "Send updates to all farmers or a selected farmer, and view them in the farmer portal.",
+    reports: "Reports & exports", reportsText: "Preview filtered reports and download complete CSV exports for your records.",
+    processTitle: "A simple flow, from account to collection", admin: "Admin creates farmer accounts", adminText: "Farmers receive their ID and password from the administrator.",
+    sign: "Choose your login", signText: "Use Farmer or Admin on the same login page to access your portal.",
+    work: "Keep your records together", workText: "Record collections, review earnings, and follow dairy updates.",
+    footer: "Milk records. Clear earnings. Connected farmers.", note: "Earnings show milk collection value; they do not indicate payment received.",
+  },
+  te: {
+    login: "లాగిన్", features: "ఫీచర్లు", how: "ఎలా పనిచేస్తుంది", badge: "సులభమైన డైరీ నిర్వహణ",
+    title: "ప్రతి పాల సేకరణ.", accent: "స్పష్టమైన వివరాలు.", description: "రైతులు, పాల సేకరణ రికార్డులు, ఆదాయ వివరాలు—అన్నీ ఒకే చోట సులభంగా చూడండి.",
+    cta: "DairyFlowలో లాగిన్ అవ్వండి", secondary: "ఫీచర్లు చూడండి", photo: "మీ డైరీతో అనుసంధానం", photoText: "రైతులు, నిర్వాహకులకు ఒకే వేదిక.",
+    featureTitle: "మీ డైరీకి అవసరమైనవి ఒకే చోట", featureText: "రోజువారీ పనులకు సులభమైన సాధనాలు.",
+    collection: "పాల సేకరణ", collectionText: "ఉదయం, సాయంత్రం పాల పరిమాణం, ధర, అందుబాటులో ఉన్న నాణ్యత వివరాలు నమోదు చేయండి.",
+    earnings: "నెలవారీ ఆదాయం", earningsText: "పాల విలువ, మొత్తం లీటర్లు, రోజు లేదా రైతు వారీ ఆదాయం చూడండి.",
+    notifications: "రైతులకు నోటిఫికేషన్లు", notificationsText: "అందరికీ లేదా ఒక రైతుకు సమాచారం పంపండి; రైతులు తమ పోర్టల్‌లో చూడవచ్చు.",
+    reports: "రిపోర్టులు & ఎక్స్‌పోర్ట్", reportsText: "ఫిల్టర్ చేసిన రిపోర్టులు చూడండి, పూర్తి CSV ఫైళ్లు డౌన్‌లోడ్ చేయండి.",
+    processTitle: "ఖాతా నుంచి పాల సేకరణ వరకు సులభంగా", admin: "అడ్మిన్ రైతు ఖాతా సృష్టిస్తారు", adminText: "రైతుకు ID, పాస్‌వర్డ్‌ను అడ్మిన్ ఇస్తారు.",
+    sign: "మీ లాగిన్ ఎంచుకోండి", signText: "ఒకే లాగిన్ పేజీలో Farmer లేదా Admin ఎంచుకోండి.",
+    work: "రికార్డులు ఒకే చోట ఉంచండి", workText: "పాల సేకరణ నమోదు చేయండి, ఆదాయం, డైరీ సమాచారాన్ని చూడండి.",
+    footer: "పాల రికార్డులు. స్పష్టమైన ఆదాయం. అనుసంధానమైన రైతులు.", note: "ఆదాయం అంటే పాల సేకరణ విలువ మాత్రమే; అందుకున్న చెల్లింపు కాదు.",
+  },
+};
 
 export default function LandingPage() {
-  const { t } = useLanguage();
-
-  return (
-    <div className="min-h-screen bg-[#FAFCF8] text-[#17231D] flex flex-col selection:bg-[#3A8F3D]/20 selection:text-[#0B5D3B] overflow-x-hidden max-w-full">
-      {/* 1. NAVBAR (Streamlined, No Hamburger) */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#DDE8DF] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <Logo size="sm" className="sm:hidden" href="/" />
-          <Logo size="md" className="hidden sm:inline-flex" href="/" />
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link
-              href="#features"
-              className="text-sm font-semibold text-[#17231D] hover:text-[#0B5D3B] transition-colors"
-            >
-              {t.nav.features}
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="text-sm font-semibold text-[#17231D] hover:text-[#0B5D3B] transition-colors"
-            >
-              {t.nav.howItWorks}
-            </Link>
-            <Link
-              href="#about"
-              className="text-sm font-semibold text-[#17231D] hover:text-[#0B5D3B] transition-colors"
-            >
-              {t.nav.about}
-            </Link>
-          </nav>
-
-          {/* Right Controls: Small Circular Language Selector & Direct Auth Buttons (No Hamburger) */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <LanguageSelector variant="circle" />
-            <Link
-              href="/login"
-              prefetch={true}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
-            >
-              {t.nav.farmerLogin}
-            </Link>
-            <Link
-              href="/admin/login"
-              prefetch={true}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "hidden sm:inline-flex")}
-            >
-              {t.nav.adminLogin}
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. HERO SECTION */}
-      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden">
-        {/* Subtle background ambient gradients */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#7CB342]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-[#0B5D3B]/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Left Column: Headline and Call-to-actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="lg:col-span-7 space-y-6"
-            >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B5D3B]/10 border border-[#0B5D3B]/20 text-[#0B5D3B] text-xs font-bold tracking-wide uppercase">
-                <BrandMark size={20} priority />
-                {t.home.heroBadge}
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#17231D] tracking-tight leading-[1.12]">
-                {t.home.heroTitlePart1}{" "}
-                <span className="text-[#3A8F3D]">{t.home.heroTitlePart2}</span>{" "}
-                {t.home.heroTitlePart3}
-              </h1>
-
-              <p className="text-lg sm:text-xl text-[#6B756E] leading-relaxed max-w-xl font-normal">
-                {t.home.heroSubtitle}
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-                <Link
-                  href="/login"
-                  prefetch={true}
-                  className={buttonVariants({
-                    variant: "primary",
-                    size: "lg",
-                    className: "w-full sm:w-auto shadow-md gap-2 justify-center",
-                  })}
-                >
-                  <span>{t.home.farmerLoginBtn}</span>
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link
-                  href="/admin/login"
-                  prefetch={true}
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "lg",
-                    className: "w-full sm:w-auto justify-center",
-                  })}
-                >
-                  {t.home.adminConsoleBtn}
-                </Link>
-                <Link
-                  href="/register"
-                  prefetch={true}
-                  className={buttonVariants({
-                    variant: "ghost",
-                    size: "lg",
-                    className: "w-full sm:w-auto text-[#0B5D3B] justify-center",
-                  })}
-                >
-                  {t.home.registerFarmerBtn}
-                </Link>
-              </div>
-
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#DDE8DF] max-w-lg">
-                <div>
-                  <div className="text-2xl font-black text-[#0B5D3B]">100%</div>
-                  <div className="text-xs text-[#6B756E] font-medium">Digital Accuracy</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-[#0B5D3B]">Instant</div>
-                  <div className="text-xs text-[#6B756E] font-medium">Fat/SNF Billing</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-[#0B5D3B]">0%</div>
-                  <div className="text-xs text-[#6B756E] font-medium">Manual Errors</div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Right Column: Hero Image with Floating Cards */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="lg:col-span-5 relative"
-            >
-              {/* Image Frame */}
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] sm:aspect-[16/11]">
-                <Image
-                  src="/images/hero-farmer.jpg"
-                  alt="Professional Indian dairy farmer with healthy cows in a green farm"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 500px"
-                  priority
-                  className="object-cover object-center transform hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-              </div>
-
-              {/* Floating Card 1: Today's Milk */}
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="absolute -bottom-4 sm:-bottom-6 left-2 sm:-left-8 bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl border border-[#DDE8DF] flex items-center gap-2.5 sm:gap-3.5 z-10"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0B5D3B] text-white flex items-center justify-center shrink-0">
-                  <Milk className="w-5 h-5 sm:w-6 sm:h-6 text-[#F4C95D]" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-[#6B756E] uppercase tracking-wider">{t.home.todayMilk}</p>
-                  <p className="text-xl sm:text-2xl font-black text-[#17231D] tracking-tight">1,248 L</p>
-                </div>
-              </motion.div>
-
-              {/* Floating Card 2: Active Farmers */}
-              <motion.div
-                initial={{ opacity: 0, y: -15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="absolute -top-3 sm:-top-4 right-2 sm:-right-6 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 sm:p-3.5 shadow-xl border border-[#DDE8DF] flex items-center gap-2.5 sm:gap-3 z-10"
-              >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#3A8F3D]/15 text-[#3A8F3D] flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-[#6B756E] uppercase tracking-wider">{t.home.activeFarmers}</p>
-                  <p className="text-lg sm:text-xl font-black text-[#0B5D3B]">48</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
+  const { language } = useLanguage();
+  const text = copy[language];
+  return <div className="min-h-screen bg-[#FAFCF8] text-[#17231D]">
+    <header className="sticky top-0 z-30 border-b border-[#DDE8DF] bg-white/95 backdrop-blur-sm"><div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8"><Logo size="md" /><nav className="hidden items-center gap-7 text-sm font-semibold text-[#53645A] md:flex"><Link href="#features" className="hover:text-[#0B5D3B]">{text.features}</Link><Link href="#how-it-works" className="hover:text-[#0B5D3B]">{text.how}</Link></nav><div className="flex items-center gap-3"><LanguageSelector /><Link href="/login" className={buttonVariants({size: "sm"})}>{text.login}<ArrowRight className="h-4 w-4" /></Link></div></div></header>
+    <main>
+      <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-8 sm:py-20 lg:grid-cols-2 lg:gap-16">
+        <div className="space-y-6"><span className="inline-flex items-center gap-2 rounded-full border border-[#DDE8DF] bg-[#EEF5E7] px-3 py-2 text-xs font-semibold text-[#0B5D3B]"><Milk className="h-4 w-4" />{text.badge}</span><h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">{text.title}<span className="mt-2 block text-[#3A8F3D]">{text.accent}</span></h1><p className="max-w-lg text-base leading-relaxed text-[#6B756E] sm:text-lg">{text.description}</p><div className="flex flex-col gap-3 pt-2 sm:flex-row"><Link href="/login" className={buttonVariants({size: "lg"})}>{text.cta}<ArrowRight className="h-5 w-5" /></Link><Link href="#features" className={buttonVariants({variant: "outline", size: "lg"})}>{text.secondary}</Link></div><p className="max-w-lg text-xs leading-relaxed text-[#6B756E]">{text.note}</p></div>
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] border border-[#DDE8DF] bg-[#0B5D3B] shadow-xl shadow-[#0B5D3B]/10"><Image src="/images/hero-farmer.jpg" alt="Farmer at a dairy farm" fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-[#07452C]/90 via-transparent to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-8"><p className="text-xl font-bold">{text.photo}</p><p className="mt-2 text-sm text-white/80">{text.photoText}</p></div></div>
       </section>
-
-      {/* 3. FEATURES SECTION (6 CARDS) */}
-      <section id="features" className="py-20 bg-white border-y border-[#DDE8DF]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B5D3B]/10 text-[#0B5D3B] text-xs font-bold uppercase tracking-wider mb-3">
-              <BrandMark size={18} />
-              {t.home.capabilitiesBadge}
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#17231D] tracking-tight">
-              {t.home.capabilitiesTitle}
-            </h2>
-            <p className="text-sm sm:text-base text-[#6B756E] mt-3">
-              {t.home.capabilitiesSubtitle}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Card 1: Milk Production */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <Milk className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featureCollectionTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featureCollectionDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                Morning & Evening Shifts <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-
-            {/* Card 2: Quality Monitoring */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <Award className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featureQualityTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featureQualityDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                Automated Fat/SNF Tests <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-
-            {/* Card 3: Payment Tracking */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <Receipt className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featurePayoutsTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featurePayoutsDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                Transparent Billing <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-
-            {/* Card 4: Analytics */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <LineChart className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featureAnalyticsTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featureAnalyticsDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                Production Forecasting <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-
-            {/* Card 5: Farmer Management */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <Users className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featureFarmersTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featureFarmersDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                Complete Member Directory <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-
-            {/* Card 6: Reports */}
-            <Card hover className="p-6 flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#0B5D3B]/10 flex items-center justify-center text-[#0B5D3B] mb-5">
-                  <FileSpreadsheet className="w-6 h-6 text-[#3A8F3D]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#17231D] mb-2">{t.home.featureReportsTitle}</h3>
-                <p className="text-sm text-[#6B756E] leading-relaxed">
-                  {t.home.featureReportsDesc}
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#DDE8DF]/60 text-xs font-semibold text-[#0B5D3B] flex items-center gap-1">
-                CSV Export & Printing <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. HOW IT WORKS (3 STEPS) */}
-      <section id="how-it-works" className="py-20 bg-[#FAFCF8]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B5D3B]/10 text-[#0B5D3B] text-xs font-bold uppercase tracking-wider mb-3">
-              <BrandMark size={18} />
-              {t.home.workflowBadge}
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#17231D] tracking-tight">
-              {t.home.workflowTitle}
-            </h2>
-            <p className="text-sm sm:text-base text-[#6B756E] mt-3">
-              {t.home.workflowSubtitle}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Step 1 */}
-            <div className="relative bg-white p-8 rounded-3xl border border-[#DDE8DF] shadow-xs flex flex-col items-center text-center">
-              <span className="text-5xl font-black text-[#0B5D3B]/20 mb-4 select-none">01</span>
-              <div className="w-14 h-14 rounded-2xl bg-[#0B5D3B] text-white flex items-center justify-center mb-5 shadow-sm">
-                <Milk className="w-7 h-7 text-[#F4C95D]" />
-              </div>
-              <h4 className="text-xl font-bold text-[#17231D] mb-2">{t.home.step1Title}</h4>
-              <p className="text-sm text-[#6B756E] leading-relaxed">
-                {t.home.step1Desc}
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="relative bg-white p-8 rounded-3xl border border-[#DDE8DF] shadow-xs flex flex-col items-center text-center">
-              <span className="text-5xl font-black text-[#3A8F3D]/25 mb-4 select-none">02</span>
-              <div className="w-14 h-14 rounded-2xl bg-[#3A8F3D] text-white flex items-center justify-center mb-5 shadow-sm">
-                <Receipt className="w-7 h-7 text-white" />
-              </div>
-              <h4 className="text-xl font-bold text-[#17231D] mb-2">{t.home.step2Title}</h4>
-              <p className="text-sm text-[#6B756E] leading-relaxed">
-                {t.home.step2Desc}
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="relative bg-white p-8 rounded-3xl border border-[#DDE8DF] shadow-xs flex flex-col items-center text-center">
-              <span className="text-5xl font-black text-[#7CB342]/30 mb-4 select-none">03</span>
-              <div className="w-14 h-14 rounded-2xl bg-[#0B5D3B] text-white flex items-center justify-center mb-5 shadow-sm">
-                <LineChart className="w-7 h-7 text-[#F4C95D]" />
-              </div>
-              <h4 className="text-xl font-bold text-[#17231D] mb-2">{t.home.step3Title}</h4>
-              <p className="text-sm text-[#6B756E] leading-relaxed">
-                {t.home.step3Desc}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. ABOUT SECTION */}
-      <section id="about" className="py-20 bg-white border-t border-[#DDE8DF]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-6 relative aspect-[16/10] rounded-3xl overflow-hidden shadow-xl border border-[#DDE8DF]">
-              <Image
-                src="/images/farm-banner.jpg"
-                alt="Panoramic green pasture with grazing cows at dawn"
-                fill
-                sizes="(max-width: 768px) 100vw, 600px"
-                className="object-cover"
-              />
-            </div>
-
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B5D3B]/10 text-[#0B5D3B] text-xs font-bold uppercase tracking-wider">
-                <BrandMark size={18} />
-                {t.home.missionBadge}
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#17231D] tracking-tight">
-                {t.home.missionTitle}
-              </h2>
-              <p className="text-base text-[#6B756E] leading-relaxed">
-                {t.home.missionDesc}
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#3A8F3D] shrink-0 mt-0.5" />
-                  <p className="text-sm text-[#17231D] font-medium">{t.home.missionPoint1}</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#3A8F3D] shrink-0 mt-0.5" />
-                  <p className="text-sm text-[#17231D] font-medium">{t.home.missionPoint2}</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#3A8F3D] shrink-0 mt-0.5" />
-                  <p className="text-sm text-[#17231D] font-medium">{t.home.missionPoint3}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. FOOTER */}
-      <footer className="mt-auto bg-[#07452C] text-white py-12 border-t border-[#0B5D3B]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
-            <div className="md:col-span-2 space-y-4">
-              <Logo size="md" lightText />
-              <p className="text-sm text-white/70 max-w-sm">
-                {t.home.footerTagline}
-              </p>
-              <div className="pt-2">
-                <LanguageSelector variant="circle" dark />
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#F4C95D] mb-4">{t.home.quickLinks}</h4>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li><Link href="#features" className="hover:text-white transition-colors">{t.nav.features}</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-white transition-colors">{t.nav.howItWorks}</Link></li>
-                <li><Link href="#about" className="hover:text-white transition-colors">{t.nav.about}</Link></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">{t.home.registerFarmerBtn}</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#F4C95D] mb-4">{t.home.portals}</h4>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li><Link href="/login" className="hover:text-white transition-colors">{t.nav.farmerLogin}</Link></li>
-                <li><Link href="/admin/login" className="hover:text-white transition-colors">{t.nav.adminLogin}</Link></li>
-                <li className="pt-2 text-xs text-white/50">{t.home.support}</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/60 gap-4">
-            <p>{t.home.copyright}</p>
-            <p>{t.home.slogan}</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
+      <section id="features" className="scroll-mt-24 border-y border-[#DDE8DF] bg-white py-14 sm:py-20"><div className="mx-auto max-w-7xl px-4 sm:px-8"><div className="mb-8 max-w-2xl"><h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{text.featureTitle}</h2><p className="mt-3 text-sm text-[#6B756E]">{text.featureText}</p></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[{title: text.collection, description: text.collectionText, icon: Milk}, {title: text.earnings, description: text.earningsText, icon: CalendarDays}, {title: text.notifications, description: text.notificationsText, icon: Bell}, {title: text.reports, description: text.reportsText, icon: ClipboardList}].map(({title, description, icon: Icon}) => <article key={title} className="rounded-2xl border border-[#DDE8DF] bg-[#FAFCF8] p-6"><div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF3E4] text-[#0B5D3B]"><Icon className="h-5 w-5" /></div><h3 className="font-bold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-[#6B756E]">{description}</p></article>)}</div></div></section>
+      <section id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-14 sm:px-8 sm:py-20"><h2 className="max-w-2xl text-2xl font-bold tracking-tight sm:text-3xl">{text.processTitle}</h2><div className="mt-9 grid gap-7 md:grid-cols-3">{[{title: text.admin, description: text.adminText, icon: UserPlus}, {title: text.sign, description: text.signText, icon: Users}, {title: text.work, description: text.workText, icon: ClipboardList}].map(({title, description, icon: Icon}, index) => <article key={title}><div className="mb-4 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0B5D3B] text-sm font-bold text-white">{index + 1}</span><Icon className="h-5 w-5 text-[#3A8F3D]" /></div><h3 className="font-bold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-[#6B756E]">{description}</p></article>)}</div></section>
+    </main>
+    <footer className="bg-[#07452C] text-white"><div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8"><div><Logo size="md" lightText /><p className="mt-4 text-xs leading-relaxed text-white/70">{text.footer}</p></div><Link href="/login" className="inline-flex items-center gap-2 self-start rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold hover:bg-white/10 sm:self-auto">{text.login}<ArrowRight className="h-4 w-4" /></Link></div></footer>
+  </div>;
 }

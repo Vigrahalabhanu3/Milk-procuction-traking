@@ -2,13 +2,12 @@
 
 import React, { useEffect } from "react";
 import { Sidebar } from "./sidebar";
-import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MobileNavProps {
   isOpen: boolean;
   onClose: () => void;
-  role: "FARMER" | "ADMIN";
+  role: "farmer" | "admin";
 }
 
 export function MobileNav({ isOpen, onClose, role }: MobileNavProps) {
@@ -43,14 +42,7 @@ export function MobileNav({ isOpen, onClose, role }: MobileNavProps) {
             transition={{ type: "spring", damping: 25, stiffness: 260 }}
             className="relative w-72 max-w-[85vw] h-full z-10 shadow-2xl"
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-20 p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <Sidebar role={role} onItemClick={onClose} className="w-full" />
+            <Sidebar role={role} onItemClick={onClose} onToggle={onClose} toggleLabel="Close sidebar" className="w-full" />
           </motion.div>
         </div>
       )}

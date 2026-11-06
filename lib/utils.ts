@@ -13,10 +13,6 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatVolume(liters: number): string {
-  return `${liters.toLocaleString("en-IN", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} L`;
-}
-
 export function formatDate(dateString: string): string {
   try {
     const d = new Date(dateString);

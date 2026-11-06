@@ -1,339 +1,62 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth/auth-context";
+import { ArrowRight, Clock, IndianRupee, Milk, Moon, RefreshCw, Sun, TrendingUp } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useFarmerDashboard } from "@/lib/hooks/use-farmer-dashboard";
+import { DashboardRange, ProductionPoint, productionDateLabel } from "@/lib/services/farmer-dashboard-api";
 import { Card, StatCard } from "@/components/ui/card";
-import { Badge, QualityBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StatCardsSkeleton, Skeleton } from "@/components/ui/skeleton";
-import { getFarmerDashboardStats } from "@/lib/services/stats.service";
-import { getCollectionsByFarmer } from "@/lib/services/collection.service";
-import { getActiveAnnouncements } from "@/lib/services/announcement.service";
-import { FarmerDashboardStats, MilkCollection, Announcement } from "@/lib/types";
-import { formatCurrency, formatVolume, formatDate } from "@/lib/utils";
-import {
-  Milk,
-  Sun,
-  Moon,
-  IndianRupee,
-  Clock,
-  ArrowRight,
-  TrendingUp,
-  Megaphone,
-  CheckCircle2,
-  Calendar,
-} from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { DataLoader, LoadingSpinner } from "@/components/ui/loading-spinner";
+import { formatDate } from "@/lib/utils";
+
+const formatMoney = (value: string | number, currency: string) => Number(value).toLocaleString("en-IN", {style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2});
+const volume = (value: string | number | null | undefined) => value === null || value === undefined ? "—" : `${value} L`;
+const percent = (value: string | number | null | undefined) => value === null || value === undefined ? "—" : `${value}%`;
 
 export default function FarmerDashboard() {
-  const { user } = useAuth();
-  const farmerId = user?.farmerId || "FARM001";
+  const [range, setRange] = useState<DashboardRange>("7d");
+  const { data, error, isLoading, reload } = useFarmerDashboard(range);
+  const money = (value: string | number | null | undefined) => value === null || value === undefined ? "—" : formatMoney(value, data?.currency ?? "INR");
+  const trend = data?.production.trend.map(point => ({ ...point, volume: Number(point.quantity_litres) })) ?? [];
 
-  const [stats, setStats] = useState<FarmerDashboardStats | null>(null);
-  const [recentCollections, setRecentCollections] = useState<MilkCollection[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [chartRange, setChartRange] = useState<"7D" | "30D" | "3M">("7D");
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const s = await getFarmerDashboardStats(farmerId);
-        setStats(s);
-
-        const cols = await getCollectionsByFarmer(farmerId);
-        setRecentCollections(cols.slice(0, 5));
-
-        const anns = await getActiveAnnouncements();
-        setAnnouncements(anns);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadData();
-
-    const handleUpdate = () => loadData();
-    window.addEventListener("dairyflow_update_collections", handleUpdate);
-    window.addEventListener("dairyflow_update_payments", handleUpdate);
-    window.addEventListener("dairyflow_update_announcements", handleUpdate);
-
-    return () => {
-      window.removeEventListener("dairyflow_update_collections", handleUpdate);
-      window.removeEventListener("dairyflow_update_payments", handleUpdate);
-      window.removeEventListener("dairyflow_update_announcements", handleUpdate);
-    };
-  }, [farmerId]);
-
-  // Production Chart Data
-  const chartData7D = [
-    { day: "Mon", milk: 21.0, earnings: 882 },
-    { day: "Tue", milk: 23.0, earnings: 966 },
-    { day: "Wed", milk: 22.0, earnings: 924 },
-    { day: "Thu", milk: 25.0, earnings: 1050 },
-    { day: "Fri", milk: 24.0, earnings: 1008 },
-    { day: "Sat", milk: 26.0, earnings: 1092 },
-    { day: "Sun (Today)", milk: 24.5, earnings: 1029 },
-  ];
-
-  const chartData30D = [
-    { day: "Week 1", milk: 154.0, earnings: 6468 },
-    { day: "Week 2", milk: 161.5, earnings: 6783 },
-    { day: "Week 3", milk: 158.0, earnings: 6636 },
-    { day: "Week 4", milk: 168.5, earnings: 7077 },
-  ];
-
-  const chartData3M = [
-    { day: "July", milk: 640.0, earnings: 26880 },
-    { day: "August", milk: 675.0, earnings: 28350 },
-    { day: "September", milk: 692.0, earnings: 29064 },
-  ];
-
-  const activeChartData = chartRange === "7D" ? chartData7D : chartRange === "30D" ? chartData30D : chartData3M;
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* 1. WELCOME BANNER WITH SUBTLE FARM SCENERY */}
-      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[#DDE8DF] bg-white shadow-xs">
-        <div className="relative h-36 sm:h-52 w-full">
-          <Image
-            src="/images/farm-banner.jpg"
-            alt="Farm scenery header"
-            fill
-            priority
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#07452C]/95 via-[#07452C]/75 to-transparent" />
-
-          <div className="absolute inset-0 p-4 sm:p-8 flex flex-col justify-center text-white">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-              <span className="px-2 py-0.5 rounded-full bg-white/20 text-[#F4C95D] text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-                {farmerId}
-              </span>
-              <span className="text-white/60">•</span>
-              <span className="text-[11px] sm:text-xs text-white/90 font-medium">Green Valley Chilling Center</span>
-            </div>
-
-            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
-              Good Morning, {user?.name?.split(" ")[0] || "Ramesh"} 👋
-            </h1>
-            <p className="text-[11px] sm:text-sm text-white/80 mt-0.5 sm:mt-1 max-w-lg line-clamp-1 sm:line-clamp-none">
-              Here&apos;s your live milk production and cooperative payment overview.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. ACTIVE ANNOUNCEMENT (IF AVAILABLE) */}
-      {announcements.length > 0 && (
-        <div className="rounded-2xl p-3.5 sm:p-5 bg-gradient-to-r from-[#0B5D3B]/10 via-[#3A8F3D]/10 to-[#7CB342]/10 border border-[#3A8F3D]/30 flex items-start gap-3 sm:gap-3.5 shadow-2xs">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0B5D3B] text-white flex items-center justify-center shrink-0 mt-0.5">
-            <Megaphone className="w-4 h-4 sm:w-5 sm:h-5 text-[#F4C95D]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#0B5D3B] text-white">
-                Notice
-              </span>
-              <span className="text-xs font-bold text-[#17231D] truncate">{announcements[0].title}</span>
-            </div>
-            <p className="text-xs text-[#6B756E] leading-relaxed line-clamp-2 sm:line-clamp-none">{announcements[0].message}</p>
-          </div>
-        </div>
-      )}
-
-      {/* 3. KEY STATISTICS CARDS */}
-      {isLoading ? (
-        <StatCardsSkeleton count={5} />
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
-          {/* Today's Milk */}
-          <StatCard
-            title="Today's Milk"
-            value={formatVolume(stats?.todayMilk ?? 24.5)}
-            subvalue="Daily total"
-            icon={Milk}
-          />
-
-          {/* Morning Session */}
-          <StatCard
-            title="Morning"
-            value={formatVolume(stats?.morningMilk ?? 12.5)}
-            subvalue="07:30 AM"
-            icon={Sun}
-          />
-
-          {/* Evening Session */}
-          <StatCard
-            title="Evening"
-            value={formatVolume(stats?.eveningMilk ?? 12.0)}
-            subvalue="06:00 PM"
-            icon={Moon}
-          />
-
-          {/* Today's Earnings */}
-          <StatCard
-            title="Today's Earnings"
-            value={formatCurrency(stats?.todayEarnings ?? 1029)}
-            subvalue="Rate @ ₹42/L"
-            icon={IndianRupee}
-            trend={{ value: "+4.2%", positive: true }}
-          />
-
-          {/* Pending Payment */}
-          <StatCard
-            title="Pending Payment"
-            value={formatCurrency(stats?.pendingPayment ?? 4520)}
-            subvalue="Disbursal on 30 Sep"
-            icon={Clock}
-            className="col-span-2 sm:col-span-1 border-amber-200/80 bg-amber-50/20"
-          />
-        </div>
-      )}
-
-      {/* 4. CHARTS & RECENT COLLECTIONS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Production Chart */}
-        <Card className="lg:col-span-7 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-              <div>
-                <h3 className="font-bold text-lg text-[#17231D] tracking-tight">Milk Production</h3>
-                <p className="text-xs text-[#6B756E]">Interactive volume & earnings trend</p>
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-[#FAFCF8] border border-[#DDE8DF]">
-                {(["7D", "30D", "3M"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setChartRange(r)}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                      chartRange === r
-                        ? "bg-[#0B5D3B] text-white shadow-xs"
-                        : "text-[#6B756E] hover:text-[#17231D]"
-                    }`}
-                  >
-                    {r === "7D" ? "7 Days" : r === "30D" ? "30 Days" : "3 Months"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Recharts Area Chart */}
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={activeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="milkGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3A8F3D" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#3A8F3D" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6EFE8" />
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#6B756E" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#6B756E" }} axisLine={false} tickLine={false} unit="L" />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white p-3 rounded-xl border border-[#DDE8DF] shadow-md text-xs space-y-1">
-                            <p className="font-bold text-[#17231D]">{payload[0].payload.day}</p>
-                            <p className="text-[#0B5D3B] font-semibold">Volume: {payload[0].value} L</p>
-                            <p className="text-[#6B756E]">Earnings: ₹{payload[0].payload.earnings}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="milk"
-                    stroke="#0B5D3B"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#milkGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-4 mt-2 border-t border-[#DDE8DF] text-xs text-[#6B756E]">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-[#3A8F3D]" />
-              <span>Average Daily Yield: <strong className="text-[#17231D]">23.8 L</strong></span>
-            </div>
-            <span>Base Union Procurement Rate: <strong className="text-[#0B5D3B]">₹42.00 / L</strong></span>
-          </div>
-        </Card>
-
-        {/* Recent Collections Table Card */}
-        <Card className="lg:col-span-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-lg text-[#17231D] tracking-tight">Recent Collections</h3>
-                <p className="text-xs text-[#6B756E]">Latest verified deliveries</p>
-              </div>
-              <Link
-                href="/farmer/collections"
-                className="text-xs font-bold text-[#0B5D3B] hover:text-[#07452C] flex items-center gap-1"
-              >
-                View All <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="space-y-2.5">
-              {recentCollections.map((col) => (
-                <div
-                  key={col.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-[#FAFCF8] border border-[#DDE8DF] text-xs hover:border-[#3A8F3D]/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-[#DDE8DF] flex items-center justify-center font-bold text-[#0B5D3B]">
-                      {col.session === "Morning" ? (
-                        <Sun className="w-4 h-4 text-[#F4C95D]" />
-                      ) : (
-                        <Moon className="w-4 h-4 text-[#3A8F3D]" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-[#17231D]">
-                        {formatDate(col.date)} • {col.session}
-                      </p>
-                      <p className="text-[11px] text-[#6B756E]">
-                        Fat: {col.fat}% | SNF: {col.snf}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-extrabold text-sm text-[#0B5D3B]">{formatVolume(col.quantity)}</p>
-                    <p className="text-[11px] font-semibold text-[#6B756E]">{formatCurrency(col.amount)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-4 mt-3 border-t border-[#DDE8DF] flex items-center justify-between text-xs text-[#6B756E]">
-            <span>Average Fat Quality: <strong className="text-[#17231D]">4.2%</strong></span>
-            <QualityBadge grade="A+" />
-          </div>
-        </Card>
+  return <div className="space-y-4 sm:space-y-6">
+    <div className="relative overflow-hidden rounded-2xl border border-[#DDE8DF] bg-white shadow-xs sm:rounded-3xl">
+      <div className="relative h-40 w-full sm:h-52"><Image src="/images/farm-banner.jpg" alt="Farm scenery" fill priority sizes="(max-width: 1024px) 100vw, 80vw" className="object-cover object-center" /><div className="absolute inset-0 bg-gradient-to-r from-[#07452C]/95 via-[#07452C]/75 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-center p-5 text-white sm:p-8"><div className="mb-2 flex flex-wrap items-center gap-2">{isLoading ? <LoadingSpinner label="Loading farmer details..." className="text-white [&_svg]:text-white" /> : data && <span className="rounded-full bg-white/20 px-2.5 py-1 font-mono text-xs font-bold tracking-wider text-[#F4C95D]">{data.farmer.farmer_id}</span>}<span className="text-xs text-white/80">{data?.farmer.chilling_center ?? "Your dairy overview"}</span></div><h1 className="break-words text-xl font-extrabold tracking-tight sm:text-3xl">{data ? `Welcome, ${data.farmer.name}` : "Welcome to DairyFlow"}</h1><p className="mt-1 text-xs text-white/80 sm:text-sm">Your milk production and collection earnings, all in one place.</p></div>
       </div>
     </div>
-  );
+    {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4"><p className="text-sm text-[#D9534F]">{error}</p><Button variant="outline" onClick={reload}><RefreshCw className="h-4 w-4" />Try Again</Button></div>}
+
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+      <StatCard title="Today's Milk" value={volume(data?.today.quantity_litres)} subvalue="Daily total" icon={Milk} isLoading={isLoading} />
+      <StatCard title="Morning" value={volume(data?.today.morning_litres)} subvalue={`Shift timing: ${data?.today.morning_time ?? "—"}`} icon={Sun} isLoading={isLoading} />
+      <StatCard title="Evening" value={volume(data?.today.evening_litres)} subvalue={`Shift timing: ${data?.today.evening_time ?? "—"}`} icon={Moon} isLoading={isLoading} />
+      <StatCard title="Today's Earnings" value={data ? money(data.today.earnings) : "—"} subvalue="Milk collection value" icon={IndianRupee} isLoading={isLoading} />
+      <StatCard title="Pending Payment" value={money(data?.payments.pending_amount)} subvalue={`Payout date: ${data?.payments.next_disbursement_date ? productionDateLabel(data.payments.next_disbursement_date, "7d", true) : "—"}`} icon={Clock} isLoading={isLoading} className="col-span-2 border-amber-200/80 bg-amber-50/20 sm:col-span-1" />
+    </div>
+
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <Card className="flex min-w-0 flex-col justify-between lg:col-span-7">
+        <div><div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="text-lg font-bold tracking-tight text-[#17231D]">Milk Production</h2><p className="mt-1 text-xs text-[#6B756E]">{range === "3m" ? "Three calendar months, including the current month" : "Daily milk volume and collection earnings"}</p></div><div role="group" aria-label="Production chart range" className="flex items-center gap-1 self-start rounded-xl border border-[#DDE8DF] bg-[#FAFCF8] p-1">{([{value: "7d", label: "7 Days"}, {value: "30d", label: "30 Days"}, {value: "3m", label: "3 Months"}] as const).map(tab => <button key={tab.value} type="button" aria-pressed={range === tab.value} onClick={() => setRange(tab.value)} className={`min-h-9 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${range === tab.value ? "bg-[#0B5D3B] text-white shadow-xs" : "text-[#6B756E] hover:text-[#17231D]"}`}>{tab.label}</button>)}</div></div>
+          <div className="h-64 min-w-0 w-full" aria-busy={isLoading}>
+            {isLoading ? <DataLoader label="Loading production chart..." className="h-full" /> : error ? <div className="flex h-full items-center justify-center text-sm text-[#6B756E]">Production data is unavailable.</div> : !trend.length ? <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-[#6B756E]"><Milk className="h-8 w-8 text-[#8AA582]" /><p>No production data for this range.</p></div> : <ResponsiveContainer width="100%" height="100%"><AreaChart data={trend} margin={{top: 10, right: 10, left: -20, bottom: 0}}><defs><linearGradient id="farmerMilkGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3A8F3D" stopOpacity={0.35} /><stop offset="95%" stopColor="#3A8F3D" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6EFE8" /><XAxis dataKey="date" tickFormatter={value => productionDateLabel(String(value), range)} tick={{fontSize: 11, fill: "#6B756E"}} axisLine={false} tickLine={false} /><YAxis tick={{fontSize: 11, fill: "#6B756E"}} axisLine={false} tickLine={false} unit="L" /><Tooltip content={({active, payload}) => {
+              const point = payload?.[0]?.payload as ProductionPoint | undefined;
+              return active && point ? <div className="space-y-1 rounded-xl border border-[#DDE8DF] bg-white p-3 text-xs shadow-md"><p className="font-bold text-[#17231D]">{productionDateLabel(point.date, range, true)}</p><p className="font-semibold text-[#0B5D3B]">Volume: {point.quantity_litres} L</p><p className="text-[#6B756E]">Morning: {point.morning_litres} L · Evening: {point.evening_litres} L</p><p className="text-[#6B756E]">Earnings: {money(point.earnings)}</p></div> : null;
+            }} /><Area type="monotone" dataKey="volume" name="Milk volume" stroke="#0B5D3B" strokeWidth={2.5} fill="url(#farmerMilkGradient)" /></AreaChart></ResponsiveContainer>}
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#DDE8DF] pt-4 text-xs text-[#6B756E]"><span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4 text-[#3A8F3D]" />Average daily yield: {isLoading ? <LoadingSpinner label="Loading average yield..." /> : <strong className="text-[#17231D]">{volume(data?.production.average_daily_yield_litres)}</strong>}</span><span>Union rate: <strong className="text-[#0B5D3B]">{data?.production.base_union_rate === null || data?.production.base_union_rate === undefined ? "—" : `${money(data.production.base_union_rate)} / L`}</strong></span></div>
+      </Card>
+
+      <Card className="flex min-w-0 flex-col justify-between lg:col-span-5">
+        <div><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold tracking-tight text-[#17231D]">Recent Collections</h2><p className="mt-1 text-xs text-[#6B756E]">Your latest five recorded deliveries</p></div><Link href="/farmer/collections" className="inline-flex items-center gap-1 text-xs font-bold text-[#0B5D3B] hover:underline">View All<ArrowRight className="h-3.5 w-3.5" /></Link></div>
+          {isLoading ? <DataLoader label="Loading recent collections..." /> : error ? <p className="py-8 text-center text-sm text-[#6B756E]">Recent collections are unavailable.</p> : !data?.recent_collections.length ? <p className="py-10 text-center text-sm text-[#6B756E]">No milk collections recorded yet.</p> : <div className="space-y-3">{data.recent_collections.slice(0, 5).map(collection => <article key={collection.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DDE8DF] bg-[#FAFCF8] p-3 text-xs"><div className="flex min-w-0 items-start gap-3"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#DDE8DF] bg-white">{collection.shift === "morning" ? <Sun className="h-4 w-4 text-amber-600" /> : <Moon className="h-4 w-4 text-[#3A8F3D]" />}</div><div><p className="font-semibold text-[#17231D]">{formatDate(collection.collection_date)} · {collection.shift === "morning" ? "Morning" : "Evening"}</p><p className="mt-1 text-[11px] text-[#6B756E]">Fat: {percent(collection.fat)} · SNF: {percent(collection.snf)}</p></div></div><div className="ml-auto text-right"><p className="text-sm font-bold text-[#0B5D3B]">{collection.quantity_litres} L</p><p className="mt-1 font-semibold text-[#6B756E]">{money(collection.amount)}</p></div></article>)}</div>}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#DDE8DF] pt-4 text-xs text-[#6B756E]">Average fat: {isLoading ? <LoadingSpinner label="Loading average fat..." /> : <strong className="text-[#17231D]">{percent(data?.production.average_fat)}</strong>}</div>
+      </Card>
+    </div>
+  </div>;
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Download, X, Share2, PlusSquare, CheckCircle2, Smartphone } from "lucide-react";
+import { Download, X, Share2, PlusSquare, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useToast } from "@/components/ui/toast";
@@ -32,7 +32,7 @@ export function PwaInstallPrompt() {
       setIsStandalone(Boolean(isStandaloneMode));
     };
 
-    checkStandalone();
+    const timer = window.setTimeout(() => { checkStandalone(); setIsIOS(isSafari); }, 0);
 
     // 2. Detect iOS Safari
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -42,7 +42,6 @@ export function PwaInstallPrompt() {
       userAgent.includes("safari") &&
       !userAgent.includes("crios") &&
       !userAgent.includes("fxios");
-    setIsIOS(isSafari);
 
     // 3. Listen for Android / Chrome beforeinstallprompt
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -82,11 +81,12 @@ export function PwaInstallPrompt() {
     window.addEventListener("dairyflow_trigger_install", handleManualTrigger);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
       window.removeEventListener("dairyflow_trigger_install", handleManualTrigger);
     };
-  }, [success]);
+  }, [success, deferredPrompt]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {

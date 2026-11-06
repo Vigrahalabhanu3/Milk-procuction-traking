@@ -1,425 +1,87 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { UserRound, LogOut, Hash, Mail, IdCard, Sprout, ArrowUpRight, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getFarmerById, updateFarmer } from "@/lib/services/farmer.service";
-import { Farmer } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/toast";
-import {
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  Home,
-  Calendar,
-  ShieldCheck,
-  Lock,
-  Building2,
-  CheckCircle2,
-  LogOut,
-  Download,
-  Smartphone,
-} from "lucide-react";
+import { DataLoader } from "@/components/ui/loading-spinner";
 
 export default function FarmerProfilePage() {
-  const router = useRouter();
-  const { user, updateUser, logout } = useAuth();
-  const farmerId = user?.farmerId || "FARM001";
-  const { success, error } = useToast();
+  const { user, isLoading, logout } = useAuth();
 
-  const [farmer, setFarmer] = useState<Farmer | null>(null);
-  const [phone, setPhone] = useState("");
-  const [village, setVillage] = useState("");
-  const [address, setAddress] = useState("");
-  const [cattleCount, setCattleCount] = useState<number>(8);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  if (isLoading) return <Card className="mx-auto max-w-4xl"><DataLoader label="Loading your profile..." /></Card>;
+  if (!user) return <p className="text-sm text-[#6B756E]">Sign in to view your profile.</p>;
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isStandaloneMode =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-      setIsAppInstalled(Boolean(isStandaloneMode));
-    }
-  }, []);
+  const accountType = user.role === "farmer" ? "Farmer" : "Admin";
+  const initials = user.name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join("").toUpperCase();
+  // Only display details supplied by the authenticated user's API response.
+  const details = [
+    { label: "Full name", value: user.name, icon: UserRound },
+    { label: "Farmer ID", value: user.farmer_id, icon: IdCard, mono: true },
+    { label: "Account type", value: accountType, icon: UserCircle2 },
+    { label: "Email address", value: user.email, icon: Mail },
+    { label: "Account ID", value: String(user.id), icon: Hash, mono: true },
+  ].filter(detail => typeof detail.value === "string" && detail.value.trim() !== "");
 
-  const triggerPwaInstall = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("dairyflow_trigger_install"));
-    }
-  };
+  return <div className="mx-auto max-w-4xl space-y-5 pb-6 sm:space-y-6">
+    <header className="flex items-end justify-between gap-4">
+      <div>
+        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#6B756E]">Your account</p>
+        <h1 className="text-2xl font-black tracking-tight text-[#17231D] sm:text-3xl">My Profile</h1>
+      </div>
+      <span className="hidden rounded-full border border-[#DDE8DF] bg-white px-3 py-1.5 text-xs font-medium text-[#6B756E] sm:inline-flex">DairyFlow · {accountType} portal</span>
+    </header>
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const data = await getFarmerById(farmerId);
-        if (data) {
-          setFarmer(data);
-          setPhone(data.phone);
-          setVillage(data.village);
-          setAddress(data.address);
-          setCattleCount(data.cattleCount || 8);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadProfile();
-  }, [farmerId]);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!farmer) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await updateFarmer(farmer.id, {
-        phone,
-        village,
-        address,
-        cattleCount,
-      });
-
-      if (updated) {
-        setFarmer(updated);
-        updateUser({ phone, village, address });
-        success("Farmer profile updated successfully.");
-      }
-    } catch {
-      error("Failed to update profile details.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    success("Logged out successfully. Have a great day!");
-    router.push("/login");
-  };
-
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      {/* Page Header with Responsive Layout and Direct Logout Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#17231D] tracking-tight">
-            Farmer Membership Profile
-          </h1>
-          <p className="text-xs sm:text-sm text-[#6B756E] mt-1">
-            Registered member details and chilling center dispatch verification.
-          </p>
+    <section aria-label="Profile overview" className="overflow-hidden rounded-3xl border border-[#DDE8DF] bg-white shadow-sm shadow-[#0B5D3B]/5">
+      <div className="relative isolate h-36 overflow-hidden bg-gradient-to-br from-[#07452C] via-[#0B5D3B] to-[#28794C] sm:h-44">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-12 -top-28 h-80 w-80 rounded-full border border-white/10 bg-white/[0.03]" />
+          <div className="absolute -right-20 -top-16 h-80 w-80 rounded-full border border-white/10" />
+          <div className="absolute -bottom-56 left-1/3 h-72 w-[650px] -rotate-12 rounded-[50%] bg-[#87AE62]/10" />
+          <Sprout strokeWidth={0.7} className="absolute right-7 top-3 h-36 w-36 -rotate-12 text-white/[0.08] sm:right-14 sm:h-44 sm:w-44" />
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 active:bg-red-200 transition-colors text-xs sm:text-sm font-bold touch-manipulation shadow-2xs"
-          aria-label="Logout"
-        >
-          <LogOut className="w-4 h-4 text-red-600" />
-          <span>Logout</span>
-        </button>
+        <div className="relative flex items-center justify-between gap-4 px-5 pt-6 sm:px-8 sm:pt-7">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white/85"><Sprout className="h-4 w-4 text-[#D8EAB5]" />Rooted in better farming</span>
+          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/90">{accountType} account</span>
+        </div>
       </div>
 
-      {/* Profile Overview Card - Enhanced Shapes & Responsiveness */}
-      {isLoading ? (
-        <Card className="p-4 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#DDE8DF] shadow-xs">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl" />
-            <div className="flex-1 space-y-2.5 w-full text-center sm:text-left">
-              <Skeleton className="h-6 w-48 mx-auto sm:mx-0" />
-              <Skeleton className="h-4 w-32 mx-auto sm:mx-0" />
-              <div className="flex gap-4 pt-2 justify-center sm:justify-start">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-4 w-36" />
-              </div>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-4 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#DDE8DF] shadow-xs">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            {/* Avatar with Smooth Shapes & Verified Badge */}
-            <div className="relative shrink-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0B5D3B]/15 to-[#3A8F3D]/10 border-2 border-[#0B5D3B]/25 flex items-center justify-center text-3xl font-black text-[#0B5D3B] shadow-inner">
-                {farmer?.name?.charAt(0) || "R"}
-              </div>
-              <div
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#3A8F3D] border-2 border-white flex items-center justify-center text-white text-[11px] font-bold shadow-xs"
-                title="Verified Member"
-              >
-                ✓
-              </div>
-            </div>
-
-            <div className="flex-1 text-center sm:text-left space-y-2 w-full">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-black text-[#17231D] tracking-tight">
-                  {farmer?.name || "Ramesh Kumar"}
-                </h2>
-                <StatusBadge status={farmer?.status || "Active"} />
-              </div>
-
-              <p className="text-xs text-[#6B756E]">
-                Permanent Member ID:{" "}
-                <span className="inline-block px-2 py-0.5 rounded-lg bg-[#0B5D3B]/10 text-[#0B5D3B] font-extrabold border border-[#0B5D3B]/20">
-                  {farmer?.farmerId || "FARM001"}
-                </span>
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-xs text-[#6B756E]">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FAFCF8] border border-[#DDE8DF]">
-                  <Calendar className="w-3.5 h-3.5 text-[#3A8F3D]" />
-                  Enrolled: {farmer?.joinedDate || "15 Jan 2024"}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FAFCF8] border border-[#DDE8DF]">
-                  <Building2 className="w-3.5 h-3.5 text-[#3A8F3D]" />
-                  Unit: Green Valley Dairy
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Editable & Immutable Profile Form */}
-      <Card className="p-4 sm:p-6 lg:p-8 bg-white rounded-2xl sm:rounded-3xl border border-[#DDE8DF] shadow-xs">
-        <div className="mb-6 pb-4 border-b border-[#DDE8DF] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#17231D]">
-              Personal & Contact Information
-            </h3>
-            <p className="text-xs text-[#6B756E]">
-              You may update your active contact and residence details.
-            </p>
-          </div>
-          <span className="self-start sm:self-auto text-[11px] sm:text-xs font-semibold text-[#0B5D3B] bg-[#0B5D3B]/10 px-3 py-1 rounded-full border border-[#0B5D3B]/20">
-            Safe Profile Editing
-          </span>
+      <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
+        <div className="-mt-11 mb-4 inline-flex rounded-[24px] bg-white p-1.5 sm:-mt-12">
+          <div aria-hidden="true" className="flex h-20 w-20 items-center justify-center rounded-[19px] border border-[#DDE8DF] bg-gradient-to-br from-[#EFF5E8] to-[#DEEAD7] text-2xl font-black tracking-tight text-[#0B5D3B] sm:h-24 sm:w-24 sm:text-3xl">{initials}</div>
         </div>
-
-        <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            {/* Full Name (Read-Only) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                  Registered Full Name
-                </label>
-                <span className="text-[10px] text-[#6B756E] flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-[#6B756E]" /> Union Locked
-                </span>
-              </div>
-              <input
-                type="text"
-                disabled
-                value={farmer?.name || "Ramesh Kumar"}
-                className="w-full px-4 py-3 rounded-xl border border-[#DDE8DF]/80 bg-[#FAFCF8] text-base sm:text-sm font-semibold text-[#6B756E] cursor-not-allowed min-h-[48px]"
-              />
-            </div>
-
-            {/* Farmer ID (Read-Only) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                  Farmer Member ID
-                </label>
-                <span className="text-[10px] text-[#6B756E] flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-[#6B756E]" /> Immutable
-                </span>
-              </div>
-              <input
-                type="text"
-                disabled
-                value={farmer?.farmerId || "FARM001"}
-                className="w-full px-4 py-3 rounded-xl border border-[#DDE8DF]/80 bg-[#FAFCF8] text-base sm:text-sm font-semibold text-[#6B756E] cursor-not-allowed min-h-[48px]"
-              />
-            </div>
-
-            {/* Email Address (Read-Only) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                  Email Address
-                </label>
-                <span className="text-[10px] text-[#6B756E] flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-[#6B756E]" /> Account ID
-                </span>
-              </div>
-              <input
-                type="email"
-                disabled
-                value={farmer?.email || "farmer@dairyflow.com"}
-                className="w-full px-4 py-3 rounded-xl border border-[#DDE8DF]/80 bg-[#FAFCF8] text-base sm:text-sm font-semibold text-[#6B756E] cursor-not-allowed min-h-[48px]"
-              />
-            </div>
-
-            {/* Phone (Editable) */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                Active Phone Number
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B756E]">
-                  <Phone className="w-4 h-4" />
-                </div>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 9876543210"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DDE8DF] text-base sm:text-sm font-medium text-[#17231D] placeholder:text-[#6B756E]/60 focus:outline-none focus:border-[#3A8F3D] focus:ring-2 focus:ring-[#3A8F3D]/20 bg-white min-h-[48px] transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Village (Editable) */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                Village / Tehsil
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B756E]">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={village}
-                  onChange={(e) => setVillage(e.target.value)}
-                  placeholder="e.g. Anand Rural"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DDE8DF] text-base sm:text-sm font-medium text-[#17231D] placeholder:text-[#6B756E]/60 focus:outline-none focus:border-[#3A8F3D] focus:ring-2 focus:ring-[#3A8F3D]/20 bg-white min-h-[48px] transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Cattle Count */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-                Number of Dairy Cattle
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={200}
-                value={cattleCount}
-                onChange={(e) => setCattleCount(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-[#DDE8DF] text-base sm:text-sm font-medium text-[#17231D] focus:outline-none focus:border-[#3A8F3D] focus:ring-2 focus:ring-[#3A8F3D]/20 bg-white min-h-[48px] transition-all"
-              />
-            </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="min-w-0">
+            <h2 className="break-words text-2xl font-bold tracking-tight text-[#17231D] sm:text-3xl">{user.name}</h2>
+            <p className="mt-1.5 text-sm text-[#6B756E]">Your personal space at DairyFlow.</p>
           </div>
-
-          {/* Full Postal Address */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#17231D]">
-              Full Postal Address
-            </label>
-            <div className="relative">
-              <div className="absolute top-3.5 left-3.5 pointer-events-none text-[#6B756E]">
-                <Home className="w-4 h-4" />
-              </div>
-              <textarea
-                rows={2}
-                required
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter complete village, post, and landmark address"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#DDE8DF] text-base sm:text-sm font-medium text-[#17231D] placeholder:text-[#6B756E]/60 focus:outline-none focus:border-[#3A8F3D] focus:ring-2 focus:ring-[#3A8F3D]/20 bg-white min-h-[76px] transition-all resize-none leading-relaxed"
-              />
-            </div>
-          </div>
-
-          {/* Form Actions - Full-width on mobile */}
-          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-[#DDE8DF]">
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isSaving}
-              loadingText="Saving changes..."
-              className="w-full sm:w-auto min-h-[48px] text-sm sm:text-base font-bold rounded-xl shadow-md touch-manipulation"
-            >
-              Save Profile Updates
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      {/* Account Security & Dedicated Mobile/Desktop Logout Card */}
-      <Card className="p-4 sm:p-6 lg:p-8 bg-white rounded-2xl sm:rounded-3xl border border-[#DDE8DF] shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#DDE8DF]">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-[#17231D]">
-              Session & Account Security
-            </h3>
-            <p className="text-xs text-[#6B756E]">
-              Manage your active login session and membership security.
-            </p>
-          </div>
-          <span className="self-start sm:self-auto text-[11px] sm:text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            Active Verified Session
-          </span>
+          {user.farmer_id && <div className="inline-flex max-w-full items-center gap-3 self-start rounded-2xl border border-[#DDE8DF] bg-[#F7FAF4] px-4 py-3 sm:self-auto">
+            <IdCard aria-hidden="true" className="h-5 w-5 shrink-0 text-[#3A8F3D]" />
+            <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B756E]">Farmer ID</p><p className="break-all font-mono text-sm font-bold text-[#0B5D3B]">{user.farmer_id}</p></div>
+          </div>}
         </div>
+      </div>
+    </section>
 
-        {/* PWA App Installation for Mobile Devices */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl sm:rounded-2xl bg-[#0B5D3B]/5 border border-[#0B5D3B]/15">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#0B5D3B]">
-              <Smartphone className="w-4 h-4 text-[#3A8F3D]" />
-              <span>DairyFlow Mobile App (PWA)</span>
-            </div>
-            <p className="text-xs text-[#6B756E] leading-relaxed">
-              Install DairyFlow directly on your mobile home screen for fast 1-tap milk tracking and offline access.
-            </p>
-          </div>
+    <Card className="rounded-3xl p-5 sm:p-8">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div><h2 className="text-base font-bold tracking-tight text-[#17231D] sm:text-lg">Account details</h2><p className="mt-1 text-xs leading-relaxed text-[#6B756E] sm:text-sm">Your registered information, all in one place.</p></div>
+        <div aria-hidden="true" className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F0F5EB] text-[#3A8F3D] sm:flex"><UserCircle2 className="h-5 w-5" /></div>
+      </div>
+      <dl className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+        {details.map(({ label, value, icon: Icon, mono }) => <div key={label} className="flex min-w-0 items-start gap-3.5 rounded-2xl border border-[#E4ECE0] bg-[#FAFCF8] p-4 transition-colors hover:border-[#C7D9C4] sm:p-5">
+          <div aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E4ECE0] bg-white text-[#3A8F3D]"><Icon className="h-[18px] w-[18px]" /></div>
+          <div className="min-w-0 flex-1"><dt className="mb-1 text-xs font-medium text-[#6B756E]">{label}</dt><dd className={`break-words text-sm font-semibold leading-relaxed text-[#17231D] sm:text-base ${mono ? "font-mono" : ""}`}>{value}</dd></div>
+        </div>)}
+      </dl>
+    </Card>
 
-          {isAppInstalled ? (
-            <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-              <span>Installed on Device</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={triggerPwaInstall}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0B5D3B] hover:bg-[#07452C] active:scale-95 text-white transition-all text-xs sm:text-sm font-bold min-h-[48px] touch-manipulation shadow-xs shrink-0"
-            >
-              <Download className="w-4 h-4" />
-              <span>Install on Home Screen</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl sm:rounded-2xl bg-[#FAFCF8] border border-[#DDE8DF]">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#17231D]">
-              <ShieldCheck className="w-4 h-4 text-[#3A8F3D]" />
-              <span>Signed in as {farmer?.name || "Ramesh Kumar"}</span>
-            </div>
-            <p className="text-xs text-[#6B756E] leading-relaxed">
-              Active Member ID: <strong className="text-[#0B5D3B]">{farmer?.farmerId || "FARM001"}</strong>. When using a shared mobile phone or device, log out to protect your account.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 transition-colors text-xs sm:text-sm font-bold min-h-[48px] touch-manipulation shadow-2xs shrink-0"
-            aria-label="Logout from DairyFlow"
-          >
-            <LogOut className="w-4 h-4 text-red-600" />
-            <span>Logout from Account</span>
-          </button>
-        </div>
-      </Card>
+    <div className="flex flex-col gap-4 rounded-2xl border border-[#DDE8DF] bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+      <div className="flex items-start gap-3">
+        <div aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F4F6F2] text-[#6B756E]"><LogOut className="h-[18px] w-[18px]" /></div>
+        <div><h2 className="text-sm font-semibold text-[#17231D]">Using a shared device?</h2><p className="mt-1 text-xs leading-relaxed text-[#6B756E]">Sign out when you’re done to keep your account private.</p></div>
+      </div>
+      <Button type="button" variant="outline" onClick={logout} className="w-full shrink-0 border-red-100 bg-red-50/50 text-red-700 hover:border-red-200 hover:bg-red-50 sm:w-auto">Sign Out<ArrowUpRight className="h-4 w-4" /></Button>
     </div>
-  );
+  </div>;
 }

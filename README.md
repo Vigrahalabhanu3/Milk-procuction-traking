@@ -1,79 +1,32 @@
-# Milk-procuction-traking
+# DairyFlow
 
-# DairyFlow — Modern Milk Production & Dairy Management System
+Milk collection management frontend built with Next.js 16, React 19, TypeScript, and Tailwind CSS.
 
-A full-stack UI-first web application built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, and **Framer Motion**. DairyFlow empowers cooperative dairies and chilling centers to manage milk collections, fat/SNF quality metrics, automated pricing formulas, farmer ledger payments, and multi-language operations.
+## Run locally
 
-🌐 **Live Production App**: [https://milk-production-tracking.vercel.app](https://milk-production-tracking.vercel.app)
+Use Node.js 20.9 or later. Install dependencies with `npm install`, copy `.env.example` to `.env.local`, set `NEXT_PUBLIC_API_BASE_URL` (default `http://127.0.0.1:8000`), then run `npm run dev`.
 
----
+Open http://localhost:3000. The backend must allow the frontend origin and the Authorization and Content-Type headers through CORS.
 
-## 🚀 Key Features
+## Login and accounts
 
-* **Dual-Portal Role Architecture**:
-  * **Farmer Portal**: Daily morning/evening milk collection records, fat & SNF testing history, automated payments ledger, notification center, and mobile profile settings.
-  * **Admin / Supervisor Portal**: Real-time collections dispatch, farmer directory & enrollment, configurable rate charts (Fat % + SNF % matrix formulas), payment batch disbursements, announcements, and compliance audit logs.
-* **Mobile-First Experience**:
-  * Dedicated app-like bottom navigation bar for mobile farmers.
-  * Responsive 48px touch targets, zero horizontal overflow, and auto-zoom prevention.
-* **Bilingual Multi-Language Support**:
-  * Seamless instantaneous toggling between **English** and **తెలుగు** (Telugu) across all pages.
-  * Minimalist circular language selector with accessible popup selection.
-* **Smart Quality & Rate Engine**:
-  * Supports Cow, Buffalo, and Mixed milk types with standard pricing formulas based on Fat % and SNF %.
-* **Mock Service Architecture**:
-  * Decoupled mock repository pattern ready for PostgreSQL + Prisma migration without UI disruption.
+The homepage links to one login page at `/login`, with Farmer and Admin toggle buttons. `/login?role=admin` selects the Admin tab. Each account type uses its own backend authentication endpoint and role checks. There is no public registration or admin registration. Admins create farmer accounts inside their dashboard.
 
----
+Access tokens and users are stored in tab-scoped session storage so refreshing preserves sign-in. Sessions retain their original 30-minute expiry and end when a protected request returns 401. Refresh tokens and passwords are never persisted. Expiry and logout return to the appropriate tab of the shared login page.
 
-## 🛠️ Technology Stack
+## Connected pages
 
-* **Framework**: [Next.js](https://nextjs.org/) (App Router, Turbopack)
-* **Language**: TypeScript
-* **Styling**: Tailwind CSS
-* **Components & Icons**: Lucide React, shadcn/ui patterns
-* **Animation**: Framer Motion
-* **Forms & Validation**: React Hook Form, Zod
-* **Deployment**: [Vercel](https://vercel.com/)
+- Admin: overview, farmer directory, register farmer, add milk collection, collections, monthly earnings, reports, and notification dispatch.
+- Farmer: dashboard, collections, monthly earnings, notifications, and profile.
 
----
+All business records come from the configured API. Empty, loading, and error states are shown explicitly. Collection and notification creation require HTTP 201. Backend field errors appear beside the inputs. Role guards complement backend authorization.
 
-## 📦 Getting Started
+Monthly earnings represent saved milk collection value, not payment received or an outstanding balance. Reports support filtered JSON previews and authenticated CSV downloads of the full filtered dataset.
 
-### Prerequisites
+Unused mock services, disconnected quality/detail pages, public registration, and the retired admin settings, analytics, announcements, audit logs, and milk rates pages have been removed. Shared authenticated queries handle loading, stale responses, retries, role checks, and data-change events.
 
-* Node.js 18+ or 20+
-* npm or pnpm
+## Checks
 
-### Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/Vigrahalabhanu3/Milk-procuction-traking.git
-cd Milk-procuction-traking
-
-# 2. Install dependencies
-npm install
-
-# 3. Start local development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## 🔑 Demo Credentials
-
-| Role | Email | Password | Portal |
-| :--- | :--- | :--- | :--- |
-| **Farmer** | `farmer@dairyflow.com` | `Farmer@123` | [/login](https://milk-production-tracking.vercel.app/login) |
-| **Admin** | `admin@dairyflow.com` | `Admin@123` | [/admin/login](https://milk-production-tracking.vercel.app/admin/login) |
-
-*(Quick-fill 1-click demo buttons are provided on both login screens).*
-
----
-
-## 📜 License
-
-MIT License. Designed and built for cooperative dairy farming and milk tracking operations.
+- `npm test`: controlled API and authentication tests; does not create backend records.
+- `npm run lint`
+- `npm run build -- --webpack`

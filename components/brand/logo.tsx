@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { BrandMark } from "./brand-mark";
-import { brandConfig } from "@/lib/config/brand";
 import { cn } from "@/lib/utils";
 
 export interface LogoProps {
@@ -36,7 +35,7 @@ export function Logo({
   const config = sizeConfig[size] || sizeConfig.md;
 
   const content = (
-    <div className={cn("inline-flex items-center", config.gap, className)}>
+    <div className={cn("inline-flex items-center", config.gap, !href && className)}>
       <BrandMark size={config.markSize} priority />
       {variant !== "icon" && (
         <div className="flex flex-col leading-none select-none">
@@ -54,7 +53,7 @@ export function Logo({
               className={cn(
                 config.textSize,
                 "font-extrabold tracking-tight",
-                lightText ? "text-[#F4C95D]" : "text-[#3A8F3D]"
+                lightText ? "text-[#F4C95D]" : "text-[#28732C]"
               )}
             >
               Flow
@@ -77,7 +76,7 @@ export function Logo({
   );
 
   const wrapped = href ? (
-    <Link href={href} className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3A8F3D] rounded-lg">
+    <Link href={href} aria-label="DairyFlow home" className={cn("inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3A8F3D] rounded-lg", className)}>
       {content}
     </Link>
   ) : (

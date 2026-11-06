@@ -52,39 +52,3 @@ export function StatusBadge({ status }: { status: string }) {
   }
   return <Badge variant="default">{status}</Badge>;
 }
-
-export function QualityBadge({ grade }: { grade: string }) {
-  if (grade === "A+") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-[#0B5D3B] text-white shadow-xs">
-        {grade} ★
-      </span>
-    );
-  }
-  if (grade === "A") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#3A8F3D]/15 text-[#3A8F3D] border border-[#3A8F3D]/30">
-        Grade {grade}
-      </span>
-    );
-  }
-  if (grade === "B") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F4C95D]/25 text-[#976003] border border-[#F4C95D]/40">
-        Grade {grade}
-      </span>
-    );
-  }
-  if (grade === "C") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-        Grade {grade}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-      Rejected
-    </span>
-  );
-}

@@ -1,4 +1,5 @@
 import React from "react";
+import { LoadingSpinner } from "./loading-spinner";
 import { cn } from "@/lib/utils";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -20,33 +21,10 @@ export function Card({ className, hover = false, children, ...props }: CardProps
   );
 }
 
-export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("flex items-center justify-between gap-4 mb-4", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3 className={cn("font-bold text-lg text-[#17231D] tracking-tight", className)} {...props}>
-      {children}
-    </h3>
-  );
-}
-
-export function CardDescription({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return (
-    <p className={cn("text-xs text-[#6B756E] mt-0.5", className)} {...props}>
-      {children}
-    </p>
-  );
-}
-
 export function StatCard({
   title,
   value,
+  isLoading = false,
   subvalue,
   icon: Icon,
   trend,
@@ -54,13 +32,14 @@ export function StatCard({
 }: {
   title: string;
   value: string | number;
+  isLoading?: boolean;
   subvalue?: string;
   icon?: React.ElementType;
   trend?: { value: string; positive: boolean };
   className?: string;
 }) {
   return (
-    <Card hover className={cn("p-3.5 sm:p-5 flex flex-col justify-between", className)}>
+    <Card hover aria-busy={isLoading} className={cn("p-3.5 sm:p-5 flex flex-col justify-between", className)}>
       <div className="flex items-start justify-between gap-1">
         <span className="text-[11px] sm:text-xs font-semibold text-[#6B756E] uppercase tracking-wider truncate">{title}</span>
         {Icon && (
@@ -71,10 +50,10 @@ export function StatCard({
       </div>
 
       <div className="mt-2.5 sm:mt-4">
-        <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#17231D] tracking-tight">{value}</div>
+        <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#17231D] tracking-tight min-h-8 flex items-center">{isLoading ? <LoadingSpinner label={`Loading ${title.toLowerCase()}...`} /> : value}</div>
         {(subvalue || trend) && (
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-[11px] sm:text-xs text-[#6B756E]">
-            {trend && (
+            {trend && !isLoading && (
               <span className={cn("font-semibold", trend.positive ? "text-[#3A8F3D]" : "text-[#D9534F]")}>
                 {trend.positive ? "↑" : "↓"} {trend.value}
               </span>

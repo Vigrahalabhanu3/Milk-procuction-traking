@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useId } from "react";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { Globe, Check, ChevronDown } from "lucide-react";
+import { Globe, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,8 @@ export function LanguageSelector({
   const { language, setLanguage } = useLanguage();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownId = useId();
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -30,9 +32,13 @@ export function LanguageSelector({
         setDropdownOpen(false);
       }
     }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && dropdownOpen) { setDropdownOpen(false); triggerRef.current?.focus(); }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleEscape);
+    return () => { document.removeEventListener("mousedown", handleClickOutside); document.removeEventListener("keydown", handleEscape); };
+  }, [dropdownOpen]);
 
   // 1. Segmented Pill Mode (Wide switch for desktop footers or explicit pill requests)
   if (variant === "pill") {
@@ -116,6 +122,7 @@ export function LanguageSelector({
     <div className={cn("relative inline-block text-left", className)} ref={dropdownRef}>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={cn(
           "w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#3A8F3D]/30 relative touch-manipulation select-none group",
@@ -124,6 +131,7 @@ export function LanguageSelector({
             : "bg-white border-[#DDE8DF] text-[#0B5D3B] hover:bg-[#0B5D3B]/5 hover:border-[#3A8F3D]/60 shadow-2xs"
         )}
         aria-expanded={dropdownOpen}
+        aria-controls={dropdownOpen ? dropdownId : undefined}
         aria-label={`Language selector (Active: ${language === "en" ? "English" : "Telugu"})`}
         title={language === "en" ? "Change Language (English)" : "భాష మార్చండి (తెలుగు)"}
       >
@@ -151,6 +159,9 @@ export function LanguageSelector({
       <AnimatePresence>
         {dropdownOpen && (
           <motion.div
+            id={dropdownId}
+            role="group"
+            aria-label="Choose language"
             initial={{ opacity: 0, y: -6, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.95 }}
@@ -165,7 +176,9 @@ export function LanguageSelector({
               onClick={() => {
                 setLanguage("en");
                 setDropdownOpen(false);
+                triggerRef.current?.focus();
               }}
+              aria-pressed={language === "en"}
               className={cn(
                 "w-full px-3 py-2 text-xs flex items-center justify-between transition-colors",
                 language === "en"
@@ -182,7 +195,9 @@ export function LanguageSelector({
               onClick={() => {
                 setLanguage("te");
                 setDropdownOpen(false);
+                triggerRef.current?.focus();
               }}
+              aria-pressed={language === "te"}
               className={cn(
                 "w-full px-3 py-2 text-xs flex items-center justify-between transition-colors",
                 language === "te"

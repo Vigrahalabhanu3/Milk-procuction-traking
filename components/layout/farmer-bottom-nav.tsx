@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Milk, Award, Receipt, UserCheck } from "lucide-react";
+import { LayoutDashboard, Milk, Bell, Receipt, UserCheck } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,12 +24,12 @@ export function FarmerBottomNav() {
       icon: Milk,
     },
     {
-      label: t.farmerNav?.quality || "Quality",
-      href: "/farmer/quality",
-      icon: Award,
+      label: t.farmerNav.notifications,
+      href: "/farmer/notifications",
+      icon: Bell,
     },
     {
-      label: t.farmerNav?.payments || "Payments",
+      label: t.farmerNav?.payments || "Earnings",
       href: "/farmer/payments",
       icon: Receipt,
     },

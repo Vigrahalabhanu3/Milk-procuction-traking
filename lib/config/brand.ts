@@ -8,6 +8,4 @@ export const brandConfig = {
   description:
     "Comprehensive milk collection, quality analytics, and payout management platform designed for modern dairy cooperatives and farmers.",
   supportEmail: "support@dairyflow.com",
-  adminEmail: process.env.ADMIN_EMAIL || "admin@dairyflow.com",
-  farmerEmail: process.env.FARMER_EMAIL || "farmer@dairyflow.com",
 };
